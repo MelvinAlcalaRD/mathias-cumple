@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Panel de la Familia de Mathias</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>body { background-color: #f3f4f6; }</style>
+</head>
+<body class="p-4 md:p-8 text-gray-800">
+
+<div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-6">
+    <!-- Encabezado -->
+    <div class="flex justify-between items-start mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-indigo-700 flex items-center gap-2">
+                <span class="text-3xl">🎯</span> Panel de la Familia de Mathias
+            </h1>
+            <p class="text-gray-500 text-sm mt-1">Control en tiempo real de cupos y confirmaciones del panel</p>
+        </div>
+    </div>
+
+    <!-- Tarjetas de Estadísticas -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <p class="text-xs text-gray-400 font-bold uppercase mb-1">Total Personas</p>
+            <p id="statTotal" class="text-3xl font-bold text-indigo-600">0</p>
+        </div>
+        <div class="bg-green-50 p-4 rounded-xl border border-green-100">
+            <p class="text-xs text-green-600 font-bold uppercase mb-1">Confirmados</p>
+            <p id="statVan" class="text-3xl font-bold text-green-700">0</p>
+        </div>
+        <div class="bg-red-50 p-4 rounded-xl border border-red-100">
+            <p class="text-xs text-red-600 font-bold uppercase mb-1">No Asisten</p>
+            <p id="statNoVan" class="text-3xl font-bold text-red-700">0</p>
+        </div>
+        <div class="bg-yellow-50 p-4 rounded-xl border border-yellow-100">
+            <p class="text-xs text-yellow-600 font-bold uppercase mb-1">Porcentaje Asistencia</p>
+            <p id="statPorcentaje" class="text-3xl font-bold text-yellow-700">0%</p>
+        </div>
+    </div>
+
+    <!-- Botones de Acción -->
+    <div class="flex flex-wrap items-center gap-3 mb-8 border-b border-gray-100 pb-6">
+        <button onclick="cargarDatos()" class="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-lg font-medium hover:bg-indigo-100 transition flex items-center gap-2 cursor-pointer active:scale-95">
+            🔄 Actualizar Lista
+        </button>
+        <button onclick="exportarCSV()" class="bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 border border-gray-200 transition flex items-center gap-2 cursor-pointer active:scale-95">
+            📥 Exportar Excel / CSV
+        </button>
+        <a href="/" class="ml-auto text-xs font-semibold text-gray-500 hover:text-indigo-600 flex items-center gap-1 self-center transition">
+            ← Volver a la Invitación
+        </a>
+    </div>
+
+    <!-- Lista de Invitados -->
+    <h2 class="text-lg font-bold mb-4">Detalle de Respuestas</h2>
+    <div class="bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
+        <ul id="listaInvitados" class="divide-y divide-gray-200">
+            <li class="py-8 text-center text-gray-500">Cargando invitados...</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    // CREDENCIALES DE SUPABASE
+    const SUPABASE_URL = 'https://mfduvhniesverncvtudh.supabase.co/rest/v1/invitados?select=*';
+    const SUPABASE_ANON_KEY = 'sb_publishable_dVtRIkbVoyS2LhB2LUMuMQ_QgSDNhAP';
+
+    let invitadosData = []; // Guardamos los datos para poder exportarlos luego
+
+    function cargarDatos() {
+        document.getElementById('listaInvitados').innerHTML = '<li class="py-8 text-center text-gray-500">Actualizando...</li>';
+        
+        fetch(SUPABASE_URL, {
+            method: 'GET',
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+            }
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('Error en BD: ' + res.status);
+            return res.json();
+        })
+        .then(data => {
+            invitadosData = Array.isArray(data) ? data : [];
+            renderizarLista(invitadosData);
+        })
+        .catch(error => {
+            console.error('Error cargando datos:', error);
+            document.getElementById('listaInvitados').innerHTML = '<li class="py-8 text-center text-red-500 font-medium">Error conectando con la base de datos de Supabase.</li>';
+        });
+    }
+
+    function renderizarLista(data) {
+        const lista = document.getElementById('listaInvitados');
+        lista.innerHTML = '';
+        
+        let van = 0; 
+        let noVan = 0;
+
+        if(!data || data.length === 0) {
+            lista.innerHTML = '<li class="py-8 text-center text-gray-500">Aún no hay respuestas registradas en Supabase.</li>';
+            document.getElementById('statTotal').innerText = '0';
+            document.getElementById('statVan').innerText = '0';
+            document.getElementById('statNoVan').innerText = '0';
+            document.getElementById('statPorcentaje').innerText = '0%';
+            return;
+        }
+
+        data.forEach(invitado => {
+            const asiste = invitado.estado === 'Sí, allí estaré' || invitado.estado === 'confirmed' || invitado.estado === 'si';
+            if (asiste) van++; else noVan++;
+            
+            const li = document.createElement('li');
+            li.className = "py-4 px-6 flex justify-between items-center hover:bg-gray-100 transition";
+            
+            // Lado izquierdo: Icono y Nombre
+            const divIzq = document.createElement('div');
+            divIzq.className = "flex items-center gap-4";
+            
+            const spanIcono = document.createElement('span');
+            spanIcono.className = asiste ? "bg-green-100 text-green-600 p-2 rounded-full text-base" : "bg-red-100 text-red-600 p-2 rounded-full text-base";
+            spanIcono.textContent = asiste ? '✅' : '❌';
+            
+            const divTexto = document.createElement('div');
+            const pNombre = document.createElement('p');
+            pNombre.className = "font-bold text-gray-800";
+            pNombre.textContent = invitado.nombre || 'Sin nombre'; // Seguro contra XSS
+            
+            const pEstado = document.createElement('p');
+            pEstado.className = "text-sm text-gray-500";
+            pEstado.textContent = asiste ? 'Confirmó asistencia' : 'Avisó que no puede ir';
+
+            divTexto.appendChild(pNombre);
+            divTexto.appendChild(pEstado);
+            
+            divIzq.appendChild(spanIcono);
+            divIzq.appendChild(divTexto);
+            
+            // Lado derecho: Fecha (si existe)
+            const divDer = document.createElement('div');
+            let fechaTexto = '';
+            if (invitado.created_at) {
+                try {
+                    fechaTexto = new Date(invitado.created_at).toLocaleDateString();
+                } catch(e) {}
+            }
+            divDer.className = "text-xs text-gray-400 font-medium";
+            divDer.textContent = fechaTexto;
+
+            li.appendChild(divIzq);
+            li.appendChild(divDer);
+            lista.appendChild(li);
+        });
+
+        // Actualizar estadísticas
+        const total = van + noVan;
+        document.getElementById('statTotal').innerText = total;
+        document.getElementById('statVan').innerText = van;
+        document.getElementById('statNoVan').innerText = noVan;
+        
+        const porcentaje = total === 0 ? 0 : Math.round((van / total) * 100);
+        document.getElementById('statPorcentaje').innerText = `${porcentaje}%`;
+    }
+
+    // Función para exportar la base de datos a Excel (CSV con BOM)
+    function exportarCSV() {
+        if(!invitadosData || invitadosData.length === 0) {
+            alert("No hay datos para exportar.");
+            return;
+        }
+
+        let csvContent = "\uFEFF"; // UTF-8 BOM para que Excel reconozca tildes y caracteres especiales
+        // Encabezados
+        csvContent += "Nombre,Estado,Fecha de Registro\n";
+
+        // Filas
+        invitadosData.forEach(row => {
+            let nombre = (row.nombre || '').replace(/,/g, " "); // Quitar comas para no romper el CSV
+            let estado = row.estado || '';
+            let fecha = row.created_at ? new Date(row.created_at).toLocaleString() : 'N/A';
+            csvContent += `"${nombre}","${estado}","${fecha}"\n`;
+        });
+
+        // Descargar archivo
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", "Invitados_Cumple_Mathias.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    // Cargar al iniciar
+    cargarDatos();
+</script>
+</body>
+</html>
