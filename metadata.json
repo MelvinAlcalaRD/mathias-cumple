@@ -1,6 +1,0 @@
-{
-  "name": "Mathias Cumple - Abejita Chiquitita",
-  "description": "Invitación interactiva y confirmación de asistencia para el 1er añito de Mathias, con temática de Abejita Chiquitita y Plin Plin.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
