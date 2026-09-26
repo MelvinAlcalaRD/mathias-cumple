@@ -120,7 +120,8 @@ export default function App() {
         },
         body: JSON.stringify({
           nombre: newRSVPData.guestName,
-          estado: newRSVPData.status === 'confirmed' ? 'Sí, allí estaré' : 'No puedo ir'
+          estado: newRSVPData.status === 'confirmed' ? 'Sí, allí estaré' : 'No puedo ir',
+          guestCount: newRSVPData.status === 'confirmed' ? newRSVPData.guestCount : 0
         })
       });
     } catch (err) {
@@ -273,4 +274,3 @@ export default function App() {
     </div>
   );
 }
-
