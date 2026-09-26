@@ -109,14 +109,25 @@
             return;
         }
 
-        // Ordenar para que los más recientes salgan arriba
+        // 1. Ordenar para que los más recientes queden arriba
         data.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
+        // 2. Filtro inteligente para eliminar duplicados por nombre
+        const invitadosUnicos = [];
+        const nombresVistos = new Set();
+
         data.forEach(invitado => {
-            // Verificar si asiste (adaptado a los múltiples estados posibles)
+            const nombreNormalizado = (invitado.nombre || '').trim().toLowerCase();
+            if (nombreNormalizado !== '' && !nombresVistos.has(nombreNormalizado)) {
+                nombresVistos.add(nombreNormalizado);
+                invitadosUnicos.push(invitado);
+            }
+        });
+
+        // 3. Procesar solo la lista limpia sin duplicados
+        invitadosUnicos.forEach(invitado => {
             const asiste = invitado.estado === 'Sí, allí estaré' || invitado.estado === 'Sí, voy!' || invitado.estado === 'confirmed' || invitado.estado === 'si';
             
-            // Buscar la cantidad (prueba múltiples nombres de columna por si acaso. Por defecto: 1)
             let cantidad = parseInt(invitado.guestCount || invitado.asistentes || invitado.cantidad || invitado.guest_count || 1);
             if (isNaN(cantidad) || cantidad < 1) cantidad = 1;
 
@@ -125,7 +136,7 @@
                 familiasConfirmadas++;
             } else {
                 familiasNoVan++;
-                cantidad = 0; // Si no asisten, no suman personas
+                cantidad = 0; 
             }
             
             const li = document.createElement('li');
@@ -136,13 +147,12 @@
             
             const spanIcono = document.createElement('span');
             spanIcono.className = asiste ? "bg-green-100 text-green-600 p-3 rounded-full text-lg shadow-sm font-bold" : "bg-red-100 text-red-600 p-3 rounded-full text-lg shadow-sm";
-            spanIcono.textContent = asiste ? `+${cantidad}` : '❌'; // Muestra el número de personas en el icono
+            spanIcono.textContent = asiste ? `+${cantidad}` : '❌'; 
             
             const divTexto = document.createElement('div');
             const pNombre = document.createElement('p');
             pNombre.className = "text-lg font-bold text-gray-800 capitalize";
             
-            // Muestra el nombre y la cantidad entre paréntesis
             pNombre.textContent = asiste && cantidad > 1 ? `${invitado.nombre || 'Invitado'} (${cantidad} personas)` : (invitado.nombre || 'Invitado');
             
             const pEstado = document.createElement('p');
@@ -160,17 +170,18 @@
             if (invitado.created_at) {
                 try {
                     const fechaObj = new Date(invitado.created_at);
-                    fechaTexto = fechaObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+                    fechaTexto = fechaObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute:'2-digit' });
                 } catch(e) {}
             }
-            divDer.className = "text-sm text-gray-400 font-medium bg-gray-100 px-3 py-1 rounded-full";
-            divDer.textContent = fechaTexto;
+            divDer.className = "text-xs text-gray-400 font-medium bg-gray-100 px-3 py-1 rounded-full text-center";
+            divDer.innerHTML = `Actualizado:<br>${fechaTexto}`;
 
             li.appendChild(divIzq);
             li.appendChild(divDer);
             lista.appendChild(li);
         });
 
+        // Actualizar estadísticas globales con la lista limpia
         const totalFormularios = familiasConfirmadas + familiasNoVan;
         document.getElementById('statVan').innerText = totalPersonasConfirmadas;
         document.getElementById('statFamilias').innerText = familiasConfirmadas;
@@ -178,6 +189,9 @@
         
         const porcentaje = totalFormularios === 0 ? 0 : Math.round((familiasConfirmadas / totalFormularios) * 100);
         document.getElementById('statPorcentaje').innerText = `${porcentaje}%`;
+        
+        // Actualizar los datos para la descarga de CSV sin duplicados
+        invitadosData = invitadosUnicos;
     }
 
     function exportarCSV() {
