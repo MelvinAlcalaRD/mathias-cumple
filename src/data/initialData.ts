@@ -15,74 +15,9 @@ export const EVENT_DETAILS = {
   contactPhone: '+54 9 11 4567-8910'
 };
 
-export const INITIAL_RSVPS: RSVPResponse[] = [
-  {
-    id: 'rsvp-1',
-    guestName: 'Familia Morales González',
-    status: 'confirmed',
-    guestCount: 3,
-    notes: '¡Qué hermosa invitación! Sin alergias alimentarias. ¡Llegaremos puntuales!',
-    createdAt: '2024-10-02T14:30:00Z',
-    isFamilyGuest: true
-  },
-  {
-    id: 'rsvp-2',
-    guestName: 'Tíos Carlos y Lucía',
-    status: 'confirmed',
-    guestCount: 2,
-    notes: 'Menú sin TACC para Lucía por favor. ¡Estamos muy emocionados por ver al pequeño zumbar!',
-    createdAt: '2024-10-03T10:15:00Z',
-    isFamilyGuest: true
-  },
-  {
-    id: 'rsvp-3',
-    guestName: 'Mariana Benítez y Lucas',
-    status: 'confirmed',
-    guestCount: 2,
-    notes: '¡Allí estaremos para celebrar con Mathias!',
-    createdAt: '2024-10-04T18:40:00Z',
-    isFamilyGuest: false
-  },
-  {
-    id: 'rsvp-4',
-    guestName: 'Sebastián Herrera',
-    status: 'declined',
-    guestCount: 0,
-    notes: 'Lamentablemente estoy de viaje de trabajo ese fin de semana. ¡Les mando un abrazo enorme y muchos besos a Mathias!',
-    createdAt: '2024-10-05T09:20:00Z',
-    isFamilyGuest: false
-  }
-];
+export const INITIAL_RSVPS: RSVPResponse[] = [];
 
-export const INITIAL_WISHES: WishMessage[] = [
-  {
-    id: 'wish-1',
-    author: 'Abuelos Nélida y Roberto',
-    relation: 'Abuelos de Mathias',
-    message: '¡Feliz primer añito a la luz de nuestras vidas! Que la dulzura de la miel siempre acompañe tu sonrisita.',
-    date: 'Hace 2 días',
-    sticker: 'honey',
-    likes: 12
-  },
-  {
-    id: 'wish-2',
-    author: 'Madrina Valentina',
-    relation: 'Madrina',
-    message: '¡A cantar y zumbar con Plin Plin y la Abejita! Te amo con todo mi corazón, Mathias chiquitito.',
-    date: 'Hace 3 días',
-    sticker: 'bee',
-    likes: 9
-  },
-  {
-    id: 'wish-3',
-    author: 'Familia Morales',
-    relation: 'Primos',
-    message: '¡Los primos estamos listos con nuestras alas de abejita para bailar y jugar en el pelotero!',
-    date: 'Ayer',
-    sticker: 'cake',
-    likes: 7
-  }
-];
+export const INITIAL_WISHES: WishMessage[] = [];
 
 export const TIMELINE_SCHEDULE = [
   {
