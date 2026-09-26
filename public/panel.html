@@ -16,7 +16,7 @@
             <h1 class="text-2xl font-bold text-indigo-700 flex items-center gap-2">
                 <span class="text-3xl">🎯</span> Panel de la Familia de Mathias
             </h1>
-            <p class="text-gray-500 text-sm mt-1">Control en tiempo real de cupos y confirmaciones del panel</p>
+            <p class="text-gray-500 text-sm mt-1">Control en tiempo real de cupos y confirmaciones</p>
         </div>
     </div>
 
@@ -35,7 +35,7 @@
             <p id="statNoVan" class="text-3xl font-bold text-red-700">0</p>
         </div>
         <div class="bg-yellow-50 p-4 rounded-xl border border-yellow-100">
-            <p class="text-xs text-yellow-600 font-bold uppercase mb-1">Porcentaje Asistencia</p>
+            <p class="text-xs text-yellow-600 font-bold uppercase mb-1">Asistencia</p>
             <p id="statPorcentaje" class="text-3xl font-bold text-yellow-700">0%</p>
         </div>
     </div>
@@ -53,24 +53,23 @@
         </a>
     </div>
 
-    <!-- Lista de Invitados -->
-    <h2 class="text-lg font-bold mb-4">Detalle de Respuestas</h2>
-    <div class="bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
-        <ul id="listaInvitados" class="divide-y divide-gray-200">
+    <!-- Lista Detallada de Invitados -->
+    <h2 class="text-xl font-bold mb-4 text-gray-800">Lista Detallada de Invitados</h2>
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <ul id="listaInvitados" class="divide-y divide-gray-100">
             <li class="py-8 text-center text-gray-500">Cargando invitados...</li>
         </ul>
     </div>
 </div>
 
 <script>
-    // CREDENCIALES DE SUPABASE
     const SUPABASE_URL = 'https://mfduvhniesverncvtudh.supabase.co/rest/v1/invitados?select=*';
     const SUPABASE_ANON_KEY = 'sb_publishable_dVtRIkbVoyS2LhB2LUMuMQ_QgSDNhAP';
 
-    let invitadosData = []; // Guardamos los datos para poder exportarlos luego
+    let invitadosData = []; 
 
     function cargarDatos() {
-        document.getElementById('listaInvitados').innerHTML = '<li class="py-8 text-center text-gray-500">Actualizando...</li>';
+        document.getElementById('listaInvitados').innerHTML = '<li class="py-8 text-center text-gray-500">Actualizando base de datos...</li>';
         
         fetch(SUPABASE_URL, {
             method: 'GET',
@@ -101,7 +100,7 @@
         let noVan = 0;
 
         if(!data || data.length === 0) {
-            lista.innerHTML = '<li class="py-8 text-center text-gray-500">Aún no hay respuestas registradas en Supabase.</li>';
+            lista.innerHTML = '<li class="py-8 text-center text-gray-500">Aún no hay invitados registrados. Comparte tu enlace principal para recibir confirmaciones.</li>';
             document.getElementById('statTotal').innerText = '0';
             document.getElementById('statVan').innerText = '0';
             document.getElementById('statNoVan').innerText = '0';
@@ -109,29 +108,31 @@
             return;
         }
 
+        // Ordenar para que los más recientes salgan arriba
+        data.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
         data.forEach(invitado => {
             const asiste = invitado.estado === 'Sí, allí estaré' || invitado.estado === 'confirmed' || invitado.estado === 'si';
             if (asiste) van++; else noVan++;
             
             const li = document.createElement('li');
-            li.className = "py-4 px-6 flex justify-between items-center hover:bg-gray-100 transition";
+            li.className = "py-4 px-6 flex justify-between items-center hover:bg-gray-50 transition";
             
-            // Lado izquierdo: Icono y Nombre
             const divIzq = document.createElement('div');
             divIzq.className = "flex items-center gap-4";
             
             const spanIcono = document.createElement('span');
-            spanIcono.className = asiste ? "bg-green-100 text-green-600 p-2 rounded-full text-base" : "bg-red-100 text-red-600 p-2 rounded-full text-base";
+            spanIcono.className = asiste ? "bg-green-100 text-green-600 p-3 rounded-full text-lg shadow-sm" : "bg-red-100 text-red-600 p-3 rounded-full text-lg shadow-sm";
             spanIcono.textContent = asiste ? '✅' : '❌';
             
             const divTexto = document.createElement('div');
             const pNombre = document.createElement('p');
-            pNombre.className = "font-bold text-gray-800";
-            pNombre.textContent = invitado.nombre || 'Sin nombre'; // Seguro contra XSS
+            pNombre.className = "text-lg font-bold text-gray-800 capitalize";
+            pNombre.textContent = invitado.nombre || 'Invitado sin nombre'; 
             
             const pEstado = document.createElement('p');
-            pEstado.className = "text-sm text-gray-500";
-            pEstado.textContent = asiste ? 'Confirmó asistencia' : 'Avisó que no puede ir';
+            pEstado.className = asiste ? "text-sm font-semibold text-green-600" : "text-sm font-semibold text-red-500";
+            pEstado.textContent = asiste ? 'Confirmó asistencia' : 'No podrá asistir';
 
             divTexto.appendChild(pNombre);
             divTexto.appendChild(pEstado);
@@ -139,15 +140,15 @@
             divIzq.appendChild(spanIcono);
             divIzq.appendChild(divTexto);
             
-            // Lado derecho: Fecha (si existe)
             const divDer = document.createElement('div');
             let fechaTexto = '';
             if (invitado.created_at) {
                 try {
-                    fechaTexto = new Date(invitado.created_at).toLocaleDateString();
+                    const fechaObj = new Date(invitado.created_at);
+                    fechaTexto = fechaObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
                 } catch(e) {}
             }
-            divDer.className = "text-xs text-gray-400 font-medium";
+            divDer.className = "text-sm text-gray-400 font-medium bg-gray-100 px-3 py-1 rounded-full";
             divDer.textContent = fechaTexto;
 
             li.appendChild(divIzq);
@@ -155,7 +156,6 @@
             lista.appendChild(li);
         });
 
-        // Actualizar estadísticas
         const total = van + noVan;
         document.getElementById('statTotal').innerText = total;
         document.getElementById('statVan').innerText = van;
@@ -165,38 +165,25 @@
         document.getElementById('statPorcentaje').innerText = `${porcentaje}%`;
     }
 
-    // Función para exportar la base de datos a Excel (CSV con BOM)
     function exportarCSV() {
         if(!invitadosData || invitadosData.length === 0) {
             alert("No hay datos para exportar.");
             return;
         }
-
-        let csvContent = "\uFEFF"; // UTF-8 BOM para que Excel reconozca tildes y caracteres especiales
-        // Encabezados
-        csvContent += "Nombre,Estado,Fecha de Registro\n";
-
-        // Filas
+        let csvContent = "\uFEFFNombre,Estado,Fecha de Registro\n";
         invitadosData.forEach(row => {
-            let nombre = (row.nombre || '').replace(/,/g, " "); // Quitar comas para no romper el CSV
+            let nombre = (row.nombre || '').replace(/,/g, " "); 
             let estado = row.estado || '';
             let fecha = row.created_at ? new Date(row.created_at).toLocaleString() : 'N/A';
             csvContent += `"${nombre}","${estado}","${fecha}"\n`;
         });
-
-        // Descargar archivo
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", "Invitados_Cumple_Mathias.csv");
-        document.body.appendChild(link);
+        link.href = URL.createObjectURL(blob);
+        link.download = "Invitados_Cumple_Mathias.csv";
         link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
     }
 
-    // Cargar al iniciar
     cargarDatos();
 </script>
 </body>
